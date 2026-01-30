@@ -1,0 +1,63 @@
+# ===============================
+# Python
+# ===============================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+
+# ===============================
+# Virtual Environment
+# ===============================
+venv/
+.env/
+.env.local
+
+# ===============================
+# FastAPI / Uvicorn
+# ===============================
+*.log
+uvicorn.log
+
+# ===============================
+# OS / Editor files
+# ===============================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ===============================
+# Jupyter / Notebooks
+# ===============================
+.ipynb_checkpoints/
+
+# ===============================
+# FAISS Vector Store (Persisted Index)
+# ===============================
+data/faiss_index/
+*.faiss
+*.pkl
+
+# ===============================
+# Uploaded / Source Documents
+# ===============================
+data/*.pdf
+data/*.txt
+
+# ===============================
+# Build / Distribution
+# ===============================
+build/
+dist/
+*.egg-info/
+
+# ===============================
+# Secrets
+# ===============================
+*.key
+*.pem
