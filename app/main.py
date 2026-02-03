@@ -11,6 +11,12 @@ from app.rag.vector_store import (
     load_vector_store,
     vector_store_exists
 )
+from fastapi import UploadFile, File
+import shutil
+import os
+
+from app.rag.vector_store import add_documents
+
 app = FastAPI()
 
 
@@ -53,4 +59,31 @@ def query_agent(request: QueryRequest):
 
     return {
         "answer": result.get("final_answer")
+    }
+
+
+@app.post("/upload")
+def upload_document(file: UploadFile = File(...)):
+    """
+    Upload a PDF and add it to the vector store.
+    """
+    if not file.filename.endswith(".pdf"):
+        return {"error": "Only PDF files are supported"}
+
+    os.makedirs("data/uploads", exist_ok=True)
+    file_path = f"data/uploads/{file.filename}"
+
+    # Save file
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Load, chunk, and store
+    docs = load_pdf(file_path)
+    chunks = ingest_docs(docs)
+    add_documents(chunks)
+
+    return {
+        "status": "success",
+        "filename": file.filename,
+        "chunks_added": len(chunks)
     }
