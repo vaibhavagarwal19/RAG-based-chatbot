@@ -6,8 +6,19 @@ function appendMessage(text, sender) {
     const div = document.createElement("div");
     div.classList.add("message");
     div.classList.add(sender === "user" ? "from-user" : "from-bot");
+    // add fade-in effect
+    div.style.opacity = 0;
+    div.style.transition = "opacity 0.3s";
     div.textContent = text;
+
+    const ts = document.createElement("span");
+    ts.classList.add("ts");
+    const now = new Date();
+    ts.textContent = now.toLocaleTimeString();
+    div.appendChild(ts);
+
     chatContainer.appendChild(div);
+    requestAnimationFrame(() => { div.style.opacity = 1; });
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 

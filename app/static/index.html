@@ -6,9 +6,14 @@
     <title>Multi-Agent Chatbot</title>
     <!-- Tailwind CSS from CDN for quick styling -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <!-- Google font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">    
 
     <style>
-        /* simple customizations */
+        body { font-family: 'Inter', sans-serif; }
+        /* message container plus bubbles */
         #chat {
             display: flex;
             flex-direction: column;
@@ -16,25 +21,39 @@
         .message {
             max-width: 75%;
             padding: 0.75rem 1rem;
-            border-radius: 1rem;
-            line-height: 1.4;
+            border-radius: 1.5rem;
+            line-height: 1.5;
             word-wrap: break-word;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
         }
         .from-user {
             align-self: flex-end;
-            background-color: #3b82f6;
+            background-color: #4f46e5; /* Indigo */
             color: white;
         }
         .from-bot {
             align-self: flex-start;
-            background-color: #e5e7eb;
-            color: #111827;
+            background-color: #f3f4f6; /* Gray-100 */
+            color: #1f2937;
+        }
+        /* timestamp small text inside bubble */
+        .message .ts {
+            position: absolute;
+            bottom: -0.75rem;
+            right: 0.5rem;
+            font-size: 0.65rem;
+            color: #6b7280;
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="w-full max-w-2xl bg-white shadow-lg rounded-lg flex flex-col h-5/6">
-        <div class="border-b p-4">
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center h-screen font-sans">
+    <div class="w-full max-w-2xl bg-white bg-opacity-90 backdrop-filter backdrop-blur-lg shadow-2xl rounded-2xl flex flex-col h-5/6 overflow-hidden">
+        <header class="bg-white bg-opacity-80 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-gray-800">Multi‑Agent Chatbot</h1>
+            <small class="text-gray-500">&copy; 2026</small>
+        </header>
+        <div class="border-b p-4 bg-white bg-opacity-80">
             <form id="upload-form" class="flex items-center space-x-4" enctype="multipart/form-data">
                 <input type="file" id="upload-file" accept=".pdf" class="" />
                 <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
@@ -43,26 +62,26 @@
             </form>
             <div id="upload-status" class="mt-2 text-sm text-gray-600"></div>
         </div>
-        <div id="chat" class="flex-1 p-4 overflow-auto space-y-4">
+        <div id="chat" class="flex-1 p-6 overflow-auto space-y-4">
             <!-- Chat messages will appear here -->
         </div>
-        <form id="chat-form" class="p-4 bg-gray-200 flex items-center space-x-2" autocomplete="off">
+        <form id="chat-form" class="p-4 bg-white bg-opacity-80 flex items-center space-x-2" autocomplete="off">
             <input
                 type="text"
                 id="message"
                 placeholder="Type your message..."
-                class="flex-1 px-4 py-2 rounded-l-lg border border-gray-300 focus:outline-none"
+                class="flex-1 px-4 py-3 rounded-l-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             />
             <button
                 type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                class="px-4 py-3 bg-indigo-600 text-white rounded-r-full hover:bg-indigo-700 transition-colors duration-150"
             >
                 Send
             </button>
             <button
                 type="button"
                 id="clear-chat"
-                class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                class="px-3 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 text-sm transition-colors duration-150"
             >
                 Clear
             </button>
