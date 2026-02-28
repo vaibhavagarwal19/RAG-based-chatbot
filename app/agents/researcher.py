@@ -17,16 +17,27 @@ def research_agent(state: AgentState) -> dict:
     try:
         vector_store = get_vector_store()
 
-        # Retrieve top-k relevant chunks
+        # Retrieve top-k relevant chunks (docs may carry similarity scores)
         docs = vector_store.similarity_search(
             query=query,
-            k=4
+            k=6  # slightly larger pool for ranking
         )
 
-        retrieved_docs = [doc.page_content for doc in docs]
+        # docs is a list of Document objects; some stores include a ‘score’ attribute
+        retrieved_docs = []
+        retrieved_scores = []
+        for doc in docs:
+            retrieved_docs.append(doc.page_content)
+            # attempt to grab score metadata if available
+            score = getattr(doc, "score", None) or doc.metadata.get("score") if hasattr(doc, "metadata") else None
+            retrieved_scores.append(score)
+
+        # log for debugging
+        print(f"🔍 Retrieved {len(retrieved_docs)} chunks (scores: {retrieved_scores})")
 
         return {
             "retrieved_docs": retrieved_docs,
+            "retrieved_scores": retrieved_scores,
             "next_agent": "reasoning"
         }
 

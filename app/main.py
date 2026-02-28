@@ -19,6 +19,20 @@ from app.rag.vector_store import add_documents
 
 app = FastAPI()
 
+# serve frontend assets
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+
+# mount static folder for assets (css/js/html)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    """Return the chatbot frontend"""
+    with open("app/static/index.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
 
 @app.on_event("startup")
 def startup():
@@ -36,8 +50,11 @@ def startup():
         create_vector_store(chunks)
         print("✅ FAISS index created and saved")
 
+from typing import List, Dict, Optional
+
 class QueryRequest(BaseModel):
     query: str
+    conversation: Optional[List[Dict[str, str]]] = None
 
 
 @app.post("/query")
@@ -47,6 +64,7 @@ def query_agent(request: QueryRequest):
     """
     initial_state: AgentState = {
         "user_query": request.query,
+        "conversation": request.conversation or [],
         "plan": [],
         "retrieved_docs": [],
         "reasoning": None,
@@ -56,9 +74,11 @@ def query_agent(request: QueryRequest):
     }
 
     result = app_graph.invoke(initial_state)
+    final = result.get("final_answer") or ""
 
     return {
-        "answer": result.get("final_answer")
+        "answer": final.strip(),
+        "conversation": result.get("conversation", [])
     }
 
 

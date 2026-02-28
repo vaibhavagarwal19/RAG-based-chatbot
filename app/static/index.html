@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi-Agent Chatbot</title>
+    <!-- Tailwind CSS from CDN for quick styling -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+    <style>
+        /* simple customizations */
+        #chat {
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            max-width: 75%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .from-user {
+            align-self: flex-end;
+            background-color: #3b82f6;
+            color: white;
+        }
+        .from-bot {
+            align-self: flex-start;
+            background-color: #e5e7eb;
+            color: #111827;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="w-full max-w-2xl bg-white shadow-lg rounded-lg flex flex-col h-5/6">
+        <div class="border-b p-4">
+            <form id="upload-form" class="flex items-center space-x-4" enctype="multipart/form-data">
+                <input type="file" id="upload-file" accept=".pdf" class="" />
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+                    Upload PDF
+                </button>
+            </form>
+            <div id="upload-status" class="mt-2 text-sm text-gray-600"></div>
+        </div>
+        <div id="chat" class="flex-1 p-4 overflow-auto space-y-4">
+            <!-- Chat messages will appear here -->
+        </div>
+        <form id="chat-form" class="p-4 bg-gray-200 flex items-center space-x-2" autocomplete="off">
+            <input
+                type="text"
+                id="message"
+                placeholder="Type your message..."
+                class="flex-1 px-4 py-2 rounded-l-lg border border-gray-300 focus:outline-none"
+            />
+            <button
+                type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+                Send
+            </button>
+            <button
+                type="button"
+                id="clear-chat"
+                class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+            >
+                Clear
+            </button>
+        </form>
+    </div>
+    <script src="/static/chat.js"></script>
+</body>
+</html>

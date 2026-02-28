@@ -23,10 +23,8 @@ def executor_agent(state: AgentState) -> dict:
             "next_agent": "end"
         }
 
-    final_answer = (
-        "✅ Final Answer\n\n"
-        f"{reasoning.strip()}"
-    )
+    # deliver reasoning directly without decorative prefixes
+    final_answer = reasoning.strip()
 
     return {
         "final_answer": final_answer,

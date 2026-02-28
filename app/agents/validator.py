@@ -15,8 +15,7 @@ def validator_agent(state: AgentState) -> dict:
         return {
             "validation_status": "failed",
             "final_answer": (
-                "❌ An internal error occurred while processing your request. "
-                "Please try again."
+                "An internal error occurred while processing your request. Please try again."
             ),
             "next_agent": "end"
         }
@@ -26,8 +25,7 @@ def validator_agent(state: AgentState) -> dict:
         return {
             "validation_status": "failed",
             "final_answer": (
-                "❌ I couldn’t find relevant information in the document "
-                "to answer this question."
+                "I couldn’t find relevant information in the document to answer this question."
             ),
             "next_agent": "end"
         }
@@ -37,8 +35,7 @@ def validator_agent(state: AgentState) -> dict:
         return {
             "validation_status": "failed",
             "final_answer": (
-                "❌ The document does not contain enough information "
-                "to answer this question confidently."
+                "The document does not contain enough information to answer this question confidently."
             ),
             "next_agent": "end"
         }
@@ -48,8 +45,7 @@ def validator_agent(state: AgentState) -> dict:
         return {
             "validation_status": "failed",
             "final_answer": (
-                "❌ The retrieved information was insufficient to generate "
-                "a reliable answer."
+                "The retrieved information was insufficient to generate a reliable answer."
             ),
             "next_agent": "end"
         }
