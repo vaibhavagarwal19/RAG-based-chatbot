@@ -1,0 +1,16 @@
+venv/
+.env
+.env.*
+!.env.example
+.git/
+.github/
+tests/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+.idea/
+.vscode/
+data/faiss_index/
+data/uploads/

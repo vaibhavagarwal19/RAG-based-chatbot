@@ -1,10 +1,17 @@
-from typing import TypedDict, List, Optional
+from typing import TypedDict, List, Optional, Dict, Any
 
-class AgentState(TypedDict):
+
+class RetrievedChunk(TypedDict, total=False):
+    content: str
+    source: str
+    page: Optional[int]
+
+
+class AgentState(TypedDict, total=False):
     user_query: str
-    plan: List[str]
-    retrieved_docs: List[str]
+    retrieved_chunks: List[RetrievedChunk]
     reasoning: Optional[str]
-    validation_status: Optional[str]
     final_answer: Optional[str]
-    next_agent: str
+    sources: List[Dict[str, Any]]
+    error: Optional[str]
+    conversation: List[Dict[str, str]]

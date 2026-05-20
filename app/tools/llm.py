@@ -1,7 +1,11 @@
+import os
+
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
+
 load_dotenv()
+
 llm = ChatGroq(
-    model="qwen/qwen3-32b",
-    temperature=0.2
+    model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+    temperature=0.2,
 )

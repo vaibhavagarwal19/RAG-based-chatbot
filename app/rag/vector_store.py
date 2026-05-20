@@ -33,6 +33,10 @@ def load_vector_store():
     return _vector_store
 
 
+def is_vector_store_ready() -> bool:
+    return _vector_store is not None
+
+
 def get_vector_store():
     """
     Return the active vector store.
@@ -48,11 +52,12 @@ def vector_store_exists():
 def add_documents(docs):
     """
     Add new documents to existing FAISS index and persist.
+    Creates a new index if none exists yet.
     """
     global _vector_store
 
     if _vector_store is None:
-        raise RuntimeError("Vector store not initialized")
+        return create_vector_store(docs)
 
     _vector_store.add_documents(docs)
     _vector_store.save_local(FAISS_PATH)

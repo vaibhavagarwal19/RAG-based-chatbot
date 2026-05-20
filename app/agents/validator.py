@@ -2,56 +2,42 @@ from app.schemas.state import AgentState
 
 
 def validator_agent(state: AgentState) -> dict:
-    """
-    Validates whether the generated reasoning is grounded,
-    non-empty, and safe to present to the user.
-    """
-    retrieved_docs = state.get("retrieved_docs", [])
+    """Validate the answer and set the final user-facing response."""
+    retrieved_chunks = state.get("retrieved_chunks", [])
     reasoning = state.get("reasoning")
     error = state.get("error")
+    sources = state.get("sources", [])
 
-    # Case 1: Upstream error (LLM or retrieval failure)
-    if error:
+    if not retrieved_chunks:
         return {
-            "validation_status": "failed",
             "final_answer": (
-                "An internal error occurred while processing your request. Please try again."
+                "I couldn't find relevant information in the document to answer this question."
             ),
-            "next_agent": "end"
+            "sources": [],
         }
 
-    # Case 2: No documents retrieved
-    if not retrieved_docs:
-        return {
-            "validation_status": "failed",
-            "final_answer": (
-                "I couldn’t find relevant information in the document to answer this question."
-            ),
-            "next_agent": "end"
-        }
-
-    # Case 3: No reasoning generated
     if not reasoning:
-        return {
-            "validation_status": "failed",
-            "final_answer": (
+        if error:
+            msg = str(error)
+            if "401" in msg or "invalid_api_key" in msg.lower() or "authentication" in msg.lower():
+                answer = (
+                    "Groq API key is invalid or missing. "
+                    "Set a valid GROQ_API_KEY in your .env file and restart the server."
+                )
+            else:
+                answer = f"Could not generate an answer: {msg}"
+        else:
+            answer = (
                 "The document does not contain enough information to answer this question confidently."
-            ),
-            "next_agent": "end"
-        }
+            )
+        return {"final_answer": answer, "sources": []}
 
-    # Case 4: Weak or suspicious reasoning (too short)
     if len(reasoning.strip()) < 30:
         return {
-            "validation_status": "failed",
             "final_answer": (
                 "The retrieved information was insufficient to generate a reliable answer."
             ),
-            "next_agent": "end"
+            "sources": sources,
         }
 
-    # Passed all checks
-    return {
-        "validation_status": "passed",
-        "next_agent": "executor"
-    }
+    return {"final_answer": reasoning.strip(), "sources": sources}

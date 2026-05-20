@@ -1,103 +1,126 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+import os
+import shutil
+from contextlib import asynccontextmanager
+from typing import Any, Dict, List, Optional
+
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
 from app.graph.workflow import app_graph
+from app.rag.index_builder import get_index_status, initialize_vector_index
+from app.rag.ingestion import ingest_docs
+from app.rag.loaders import load_pdf
+from app.rag.vector_store import add_documents
 from app.schemas.state import AgentState
 
-from app.rag.loaders import load_pdf
-from app.rag.ingestion import ingest_docs
-from app.rag.vector_store import (
-    create_vector_store,
-    load_vector_store,
-    vector_store_exists
-)
-from fastapi import UploadFile, File
-import shutil
-import os
 
-from app.rag.vector_store import add_documents
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if os.getenv("SKIP_INDEX_BUILD") != "1":
+        initialize_vector_index()
+    yield
 
-app = FastAPI()
 
-# serve frontend assets
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+app = FastAPI(lifespan=lifespan)
 
-# mount static folder for assets (css/js/html)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
-    """Return the chatbot frontend"""
     with open("app/static/index.html", "r", encoding="utf-8") as f:
         return f.read()
 
 
+@app.get("/health")
+def health():
+    """Lightweight health check for Render / load balancers."""
+    return {"status": "ok"}
 
-@app.on_event("startup")
-def startup():
-    """
-    Application startup:
-    - Load FAISS from disk if available
-    - Otherwise build it from documents
-    """
-    if vector_store_exists():
-        load_vector_store()
-        print("✅ FAISS index loaded from disk")
-    else:
-        docs = load_pdf("data/attention.pdf")
-        chunks = ingest_docs(docs)
-        create_vector_store(chunks)
-        print("✅ FAISS index created and saved")
 
-from typing import List, Dict, Optional
+@app.get("/status")
+def index_status():
+    return get_index_status()
+
+
+class SourceCitation(BaseModel):
+    id: int
+    source: str
+    page: Optional[int] = None
+    excerpt: str
+
 
 class QueryRequest(BaseModel):
     query: str
     conversation: Optional[List[Dict[str, str]]] = None
 
 
-@app.post("/query")
+class QueryResponse(BaseModel):
+    answer: str
+    conversation: List[Dict[str, str]] = Field(default_factory=list)
+    sources: List[SourceCitation] = Field(default_factory=list)
+
+
+def _empty_query_response(
+    answer: str, conversation: Optional[List[Dict[str, str]]]
+) -> QueryResponse:
+    return QueryResponse(answer=answer, conversation=conversation or [], sources=[])
+
+
+@app.post("/query", response_model=QueryResponse)
 def query_agent(request: QueryRequest):
-    """
-    Accepts a user query and runs the LangGraph workflow.
-    """
+    status = get_index_status()
+    if status["building"]:
+        return _empty_query_response(
+            "Still indexing your PDF — first run can take a few minutes. Please wait and try again.",
+            request.conversation,
+        )
+    if status["error"]:
+        return _empty_query_response(
+            f"Index build failed: {status['error']}",
+            request.conversation,
+        )
+    if not status["ready"]:
+        return _empty_query_response(
+            "No document index yet. Upload a PDF or add one under the data/ folder, then restart.",
+            request.conversation,
+        )
+
     initial_state: AgentState = {
         "user_query": request.query,
         "conversation": request.conversation or [],
-        "plan": [],
-        "retrieved_docs": [],
+        "retrieved_chunks": [],
         "reasoning": None,
-        "validation_status": None,
         "final_answer": None,
-        "next_agent": "planner",
+        "sources": [],
     }
 
     result = app_graph.invoke(initial_state)
-    final = result.get("final_answer") or ""
 
-    return {
-        "answer": final.strip(),
-        "conversation": result.get("conversation", [])
-    }
+    return QueryResponse(
+        answer=(result.get("final_answer") or "").strip(),
+        conversation=result.get("conversation", []),
+        sources=result.get("sources", []),
+    )
 
 
 @app.post("/upload")
 def upload_document(file: UploadFile = File(...)):
-    """
-    Upload a PDF and add it to the vector store.
-    """
     if not file.filename.endswith(".pdf"):
         return {"error": "Only PDF files are supported"}
 
     os.makedirs("data/uploads", exist_ok=True)
     file_path = f"data/uploads/{file.filename}"
 
-    # Save file
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Load, chunk, and store
+    status = get_index_status()
+    if status["building"]:
+        return {"error": "Index is still building. Please wait and try again."}
+
     docs = load_pdf(file_path)
     chunks = ingest_docs(docs)
     add_documents(chunks)
@@ -105,5 +128,5 @@ def upload_document(file: UploadFile = File(...)):
     return {
         "status": "success",
         "filename": file.filename,
-        "chunks_added": len(chunks)
+        "chunks_added": len(chunks),
     }
